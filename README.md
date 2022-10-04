@@ -7,5 +7,5 @@ This is a clone of https://github.com/gridpane/prime-mover which was last commit
 * Clean up code and structure for easy consumption and contributions.
 
 # Previous README.md
-You can view the previous README.md at [README_original.MD](README_original.MD)
+You can view the previous README.md at [README_original.MD](README_original.md)
 
