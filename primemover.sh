@@ -1,89 +1,88 @@
 #!/bin/bash
+# ----------------------------------------------------
+# prime-mover-reborn  - v0.0.1
+#
+# github.com/managingwp/prime-mover-reborn.sh
+#
+# Original created by Patrick Gallagher (PrimeMover.io)
+# -----------------------------------------------------
 
-# PrimeMover.io
+# -- Check if sh used to run, and run with bash instead
+[ -z $BASH ] && { exec bash "$0" "$@" || exit; }
 
-# Universal WordPress VPS Migration Assistant
+# -- source functions.sh
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# shellcheck source=./functions.sh
+source $SCRIPT_DIR/functions.sh
 
-# Copyright 2018 PrimeMover.io - K. Patrick Gallagher
+# - Variables
+VERSION="0.0.1"
 
-# Easily move WordPress sites between two different servers managed by GridPane, ServerPilot, RunCloud and Others...
+SCRIPT_NAME="primve-mover-reborn"
+DEBUG="0"
+DATE=$(date '+%Y-%m-%d-%H_%M_%S')
+RAND_CHAR=$(generate-random-char)
+TMP_DIR="/tmp/prime-mover-reborn-$DATE-$RAND_CHAR"
+CIP_ADDRESS=$(curl http://ip4.ident.me 2>/dev/null)
 
-# You'll need to already have manually built your sites at RunCloud and have WordPress successfully running there BEFORE trying to move sites in from other sources.
-# ServerPilot site build code (via API) is already built but needs to be reintegrated to this work. 
+# -- Usage
+USAGE=\
+"$SCRIPT_NAME <options> <command>
 
-source ~/.bash_profile
+ Options:
+   -d                  - Turn debug on
 
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root, exiting!!!" 
-   exit 1
+ Commands:
+   migrate             - Suck all the sites.
+
+Suck sites into GridPane from other control panels.
+
+Version: $VERSION
+"
+usage () { echo "$USAGE"; }
+
+# -- Options
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    -d|--debug)
+    DEBUG="1"
+    shift # past argument
+    ;;
+    -nr|--no-root)
+    NO_ROOT="1"
+    shift # past argument
+    ;;
+    -h|--help)
+    usage
+    exit 1
+    ;;
+    -t|--test)
+    TEST="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+  esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+# -- Init
+pre-flight-check
+make-temp-dir
+
+if [[ -z $1 ]]; then
+  usage
+  exit 1
+else
+  echo "Main"
+  exit 0
 fi
-
-# Check is PV is installed, and install if needed...
-if ! type "pv" > /dev/null; then
-	echo "PV was not installed... fixing..."
-  	apt -y install pv
-fi
-
-mkdir -p /var/tmp/primemover	
-
-ipaddress=$(curl http://ip4.ident.me 2>/dev/null)
-
-MigrateType=$1
-
-MeImCounting() {
-	
-	echo "This is all very VERY aplha right now. Use at your own risk."
-	echo " "
-	echo "All kinds of things might be broken. It's a work in progress and we'll get it hammered out shortly."
-	echo " "
-	echo "Please feel free to help out."
-	echo " "
-	echo "Best of luck! Drop me a line at patrick at gridpane dot com"
-	echo " "
-	echo "You need to have already created SSH keys on both your source server and your destination server and shared them between the two."
-	echo " "
-	echo "This all automatically works if you're using GridPane because we (try, at least, to) kick all of the asses."
-
-}
-MeImCounting
-
-CommandVariablesCheck() {
-	
-	#THIS IS OLD AND WILL SOON BE KILLED!!!
-	#THIS IS OLD AND WILL SOON BE KILLED!!!
-	#THIS IS OLD AND WILL SOON BE KILLED!!!
-	
-	# Checking correct startup variables
-	if [ -z "$1" ] || [ -z "$2" ] 
-	then
-		echo " "
-		echo " "
-		echo "   ***************************************"
-		echo "*******   ERROR - MISSING VARIABLES   *******"
-		echo "   ***************************************"
-		echo " "
-		echo " "
-		echo "Command line variables required: "
-		echo " "
-		echo " 1.) URL/ALL "
-		echo " 2.) Target IP address "
-		echo " 3.) *OPTIONAL* Source API token (GridPane servers only - ServerPilot and RunCloud API support coming soon) " 
-		echo " 4.) *OPTIONAL* Target API token (GridPane servers only - ServerPilot and RunCloud API support coming soon) "
-	
-		# LOTS of work needs to be added in here to make this work seamlessly between SP and RC nodes, and between RC and RC, and between SP and SP, and... you get the point.
-		echo " "
-		echo " "
-		exit 187;
-	
-	else
-		# Set all the primary variables - Additional Variables - REQUIRED - But we'll get these soon... appname username finaldomain
-		site_to_clone=$1
-		remote_IP=$2	
-		sourcetoken=$3
-		targettoken=$3
-	fi
-
-}
+# -------------------------------------------
 
 # Install WP-CLI - Makes everything so much easier!!!
 CheckWPcli() {
