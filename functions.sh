@@ -48,6 +48,8 @@ pre-flight-check () {
   fi
 }
 
+if [ -a ]
+
 # -- make-temp-dir - nil - create temp directpry
 make-temp-dir () {
   _debug "Checking for temp directory at $TMP_DIR"
