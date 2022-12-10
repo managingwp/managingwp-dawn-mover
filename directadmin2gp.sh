@@ -9,6 +9,8 @@
 
 usage () {
     echo "directadmin2gp <sourceuser> <sourceserver> <sourcedir> <domain>"
+    echo ""
+    echo "Run on destination server, ensure sshkey is on source server."
 }
 
 SRC_USER="$1"
